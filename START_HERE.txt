@@ -1,0 +1,37 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                   CV ADAPTOR AI - START HERE                  ║
+╚═══════════════════════════════════════════════════════════════╝
+
+🚀 QUICKEST START (Docker):
+   ./docker-run.sh
+   
+   Then open: http://localhost:8501
+
+📖 FULL INSTRUCTIONS:
+   Read: GETTING_STARTED.md
+
+🐳 DOCKER OPTIONS:
+   • Quick: ./docker-run.sh
+   • Manual: docker-compose up -d
+   • Docs: DOCKER.md or DOCKER_QUICKSTART.md
+
+🐍 LOCAL PYTHON:
+   1. python -m venv venv
+   2. source venv/bin/activate
+   3. pip install -r requirements.txt
+   4. streamlit run app.py
+   
+   Full guide: QUICKSTART.md
+
+📚 DOCUMENTATION:
+   • GETTING_STARTED.md    - Choose your method
+   • QUICKSTART.md         - 5-min local setup
+   • DOCKER_QUICKSTART.md  - 2-min Docker setup
+   • DOCKER.md             - Complete Docker docs
+   • ARCHITECTURE.md       - Technical details
+   • README.md             - Project overview
+
+💡 NEED HELP?
+   Check the troubleshooting section in GETTING_STARTED.md
+
+═══════════════════════════════════════════════════════════════

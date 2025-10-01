@@ -1,0 +1,63 @@
+services:
+  # CV Adaptor AI Application
+  cv-adaptor:
+    build: .
+    container_name: cv-adaptor-ai
+    ports:
+      - "8501:8501"
+    environment:
+      # Default to Ollama running on host
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - LLM_PROVIDER=ollama
+      - OLLAMA_MODEL=llama3.2:3b
+      
+      # Uncomment to use OpenAI
+      # - LLM_PROVIDER=openai
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - OPENAI_MODEL=gpt-4o-mini
+      
+      # Uncomment to use Anthropic
+      # - LLM_PROVIDER=anthropic
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+      
+      # Uncomment to use Groq
+      # - LLM_PROVIDER=groq
+      # - GROQ_API_KEY=${GROQ_API_KEY}
+      # - GROQ_MODEL=llama-3.1-8b-instant
+    volumes:
+      # Persist vector database
+      - ./chroma_db:/app/chroma_db
+      # Persist uploads
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - cv-adaptor-network
+
+  # Optional: Ollama service (uncomment if you want Ollama in Docker)
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama-service
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   restart: unless-stopped
+  #   networks:
+  #     - cv-adaptor-network
+  #   # Uncomment if you have GPU support
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: 1
+  #   #           capabilities: [gpu]
+
+networks:
+  cv-adaptor-network:
+    driver: bridge
+
+volumes:
+  ollama-data:
+    driver: local

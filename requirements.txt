@@ -1,0 +1,28 @@
+# Core Framework
+streamlit>=1.28.0
+pydantic>=2.0.0
+
+# LangChain (required for prompts and parsers)
+langchain>=0.1.0
+langchain-core>=0.1.0
+langgraph>=0.0.20
+
+# LLM Provider Packages (install as needed)
+langchain-ollama>=0.0.1      # For local Ollama
+langchain-openai>=0.0.5      # For OpenAI GPT models
+langchain-anthropic>=0.1.0   # For Anthropic Claude
+langchain-groq>=0.0.1        # For Groq
+
+# Vector Database for RAG
+chromadb>=0.4.0
+
+# Document Processing
+pypdf>=3.0.0                 # PDF parsing
+python-docx>=1.0.0           # DOCX parsing
+
+# Web Scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# Configuration
+python-dotenv>=1.0.0
