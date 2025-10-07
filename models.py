@@ -100,16 +100,27 @@ class MatchGapReportSchema(BaseModel):
 
 
 # ============================================================================
-# Phase III: Rewriting Models
+# Phase III: Analysis Models
 # ============================================================================
 
-class RewrittenSectionSchema(BaseModel):
-    """Structured output for Rewriter Agent"""
-    summary: Optional[str] = None
-    experience: List[Experience] = Field(default_factory=list)
-    skills: List[str] = Field(default_factory=list)
-    keywords_integrated: List[str] = Field(default_factory=list)
-    modifications_made: List[str] = Field(default_factory=list)
+class SectionAnalysis(BaseModel):
+    """Analysis for a specific CV section"""
+    section_name: str  # "Summary", "Experience", "Skills", etc.
+    current_status: str  # Brief assessment of current state
+    required_changes: List[str] = Field(default_factory=list)  # Specific changes needed
+    suggested_additions: List[str] = Field(default_factory=list)  # New points to add
+    keywords_to_add: List[str] = Field(default_factory=list)  # Keywords from JD to integrate
+    priority: str = "medium"  # "high", "medium", "low"
+
+
+class CVAnalysisReportSchema(BaseModel):
+    """Concise CV Analysis Report organized by sections"""
+    overall_assessment: str  # Brief overall assessment
+    relevance_score: float = Field(ge=0.0, le=100.0)
+    section_analyses: List[SectionAnalysis] = Field(default_factory=list)
+    critical_gaps: List[str] = Field(default_factory=list)  # Must-have items missing
+    strengths_to_emphasize: List[str] = Field(default_factory=list)  # What's already good
+    quick_wins: List[str] = Field(default_factory=list)  # Easy improvements
 
 
 # ============================================================================
@@ -141,21 +152,12 @@ class QAReportSchema(BaseModel):
 # Final Output Models
 # ============================================================================
 
-class AdaptedCVSchema(BaseModel):
-    """Final adapted CV (complete output)"""
-    contact: ContactInfo
-    summary: str
-    experience: List[Experience] = Field(default_factory=list)
-    education: List[Education] = Field(default_factory=list)
-    skills: List[str] = Field(default_factory=list)
-    certifications: List[str] = Field(default_factory=list)
-    projects: List[str] = Field(default_factory=list)
-    languages: List[str] = Field(default_factory=list)
-    
-    # Metadata
-    relevance_score: float
-    qa_passed: bool
-    adaptation_notes: List[str] = Field(default_factory=list)
+class CVAnalysisOutputSchema(BaseModel):
+    """Final CV analysis output with all reports"""
+    analysis_report: CVAnalysisReportSchema
+    match_report: MatchGapReportSchema
+    candidate_name: Optional[str] = None
+    job_title: Optional[str] = None
 
 
 # ============================================================================
@@ -163,7 +165,7 @@ class AdaptedCVSchema(BaseModel):
 # ============================================================================
 
 class WorkflowState(BaseModel):
-    """State for LangGraph workflow with cyclical refinement support"""
+    """State for LangGraph workflow for CV analysis"""
     # Inputs
     cv_text: Optional[str] = None
     job_description: Optional[str] = None
@@ -175,15 +177,11 @@ class WorkflowState(BaseModel):
     # RAG and scoring (Phase II)
     match_report: Optional[MatchGapReportSchema] = None
     
-    # Rewriting (Phase III)
-    rewritten_sections: Optional[RewrittenSectionSchema] = None
-    
-    # QA (Phase IV)
-    qa_report: Optional[QAReportSchema] = None
-    qa_iteration_count: int = 0
+    # Analysis (Phase III)
+    analysis_report: Optional[CVAnalysisReportSchema] = None
     
     # Final output
-    adapted_cv: Optional[AdaptedCVSchema] = None
+    final_output: Optional[CVAnalysisOutputSchema] = None
     
     # Workflow control
     current_step: str = "start"

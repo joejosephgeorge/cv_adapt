@@ -1,5 +1,5 @@
 """
-Configuration management for CV Adaptor
+Configuration management for CV Analysis
 Supports multiple LLM providers: Ollama, OpenAI, Anthropic, etc.
 """
 from typing import Optional, Dict, Any
@@ -47,11 +47,8 @@ class LLMConfig(BaseModel):
     scoring_provider: Optional[LLMProvider] = None
     scoring_model: Optional[str] = None
     
-    rewriter_provider: Optional[LLMProvider] = None  # Cost-optimized for rewriting
+    rewriter_provider: Optional[LLMProvider] = None  # Used for analysis agent
     rewriter_model: Optional[str] = None
-    
-    qa_provider: Optional[LLMProvider] = None  # High reasoning for QA
-    qa_model: Optional[str] = None
     
     class Config:
         use_enum_values = True
@@ -143,10 +140,7 @@ class RAGConfig(BaseModel):
 
 class WorkflowConfig(BaseModel):
     """Configuration for workflow behavior"""
-    enable_qa_loop: bool = Field(default=True)
-    max_qa_iterations: int = Field(default=2)
-    min_relevance_score: float = Field(default=70.0)
-    enable_self_correction: bool = Field(default=True)
+    min_relevance_score: float = Field(default=50.0)  # Minimum score to proceed with analysis
 
 
 class Config(BaseModel):

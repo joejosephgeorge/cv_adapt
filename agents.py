@@ -1,10 +1,9 @@
 """
-Specialized LLM Agents for CV Adaptation
-Implements 4 key agents as per architecture:
+Specialized LLM Agents for CV Analysis
+Implements 3 key agents:
 1. Parser Agent: Structured data extraction
 2. Scoring Agent: RAG-enhanced relevance scoring
-3. Rewriter Agent: Content generation with RAG grounding
-4. QA Agent: Quality assurance and self-correction
+3. Analysis Agent: Generate concise CV analysis report by section
 """
 from typing import Any, Dict, List, Optional
 from langchain_core.prompts import ChatPromptTemplate
@@ -16,10 +15,9 @@ from models import (
     CandidateProfileSchema,
     JobRequirementSchema,
     MatchGapReportSchema,
-    RewrittenSectionSchema,
-    QAReportSchema,
+    CVAnalysisReportSchema,
+    SectionAnalysis,
     SkillGap,
-    QAIssue,
 )
 from rag_system import RAGSystem
 from llm_factory import get_structured_llm
@@ -378,26 +376,25 @@ Return ONLY valid JSON.
         )
 
 
-class RewriterAgent:
+class AnalysisAgent:
     """
-    Rewriter Agent: Generates tailored CV content using RAG grounding
-    Implements Action-Metric-Result framework for quantifiable achievements
+    Analysis Agent: Generates concise CV analysis report organized by sections
+    Provides specific, actionable recommendations for each CV section
     """
     
     def __init__(self, llm: Any, rag_system: RAGSystem):
         self.llm = llm
         self.rag = rag_system
     
-    def rewrite_cv(
+    def analyze_cv(
         self,
         candidate_profile: Dict[str, Any],
         job_requirements: Dict[str, Any],
-        match_report: Dict[str, Any],
-        qa_feedback: Optional[str] = None
-    ) -> RewrittenSectionSchema:
+        match_report: Dict[str, Any]
+    ) -> CVAnalysisReportSchema:
         """
-        Rewrite CV sections with RAG grounding and keyword optimization
-        Supports iterative refinement based on QA feedback
+        Analyze CV against job requirements and generate concise, actionable report
+        Organized by sections with specific recommendations for each
         """
         # Retrieve relevant facts for grounding
         target_keywords = match_report.get("target_keywords", [])
@@ -405,96 +402,120 @@ class RewriterAgent:
             f"Experience and skills related to {', '.join(target_keywords[:5])}"
         )
         
-        # Get few-shot examples from original CV for style matching
-        original_bullets = []
-        for exp in candidate_profile.get("experience", [])[:2]:
-            original_bullets.extend(exp.get("achievements", [])[:2])
-        
+        # Build comprehensive prompt for analysis
         prompt = ChatPromptTemplate.from_template("""
-You are an expert CV writer. Rewrite the CV to match the job requirements while maintaining factual accuracy.
+You are an expert career advisor analyzing a CV against job requirements.
 
-ORIGINAL CV FACTS (Ground truth - DO NOT invent new facts):
-{cv_facts}
+CANDIDATE'S CURRENT CV:
+- Summary: {candidate_summary}
+- Experience: {candidate_experience}
+- Skills: {candidate_skills}
+- Education: {candidate_education}
 
 JOB REQUIREMENTS:
-Title: {job_title}
-Required Skills: {required_skills}
-Key Responsibilities: {responsibilities}
+- Title: {job_title}
+- Required Skills: {required_skills}
+- Key Responsibilities: {responsibilities}
+- Experience Level: {experience_level}
 
-TARGET KEYWORDS TO INTEGRATE:
-{target_keywords}
+MATCH ANALYSIS:
+- Relevance Score: {relevance_score}%
+- Matched Skills: {matched_skills}
+- Skill Gaps: {skill_gaps}
+- Target Keywords: {target_keywords}
 
-SKILL GAPS TO ADDRESS:
-{skill_gaps}
+Generate a CONCISE CV analysis report organized by sections. For each section, provide:
+1. Current status assessment
+2. Required changes (specific, actionable)
+3. New points to add (with examples)
+4. Keywords to integrate from job description
 
-STYLE EXAMPLES (maintain similar tone and length):
-{style_examples}
-
-ACTION-METRIC-RESULT FRAMEWORK:
-Each bullet should follow: "Action Verb + Task + Metric + Result"
-Example: "Led team of 5 engineers to migrate legacy system, reducing deployment time by 40% and improving reliability"
-
-{qa_feedback}
-
-Generate rewritten sections as JSON:
+Return as JSON:
 {{
-    "summary": "Tailored professional summary (100-150 words) emphasizing {job_title} skills and {key_skills}",
-    "experience": [
+    "overall_assessment": "Brief 2-3 sentence overall assessment of CV fit",
+    "relevance_score": {relevance_score},
+    "section_analyses": [
         {{
-            "company": "Company Name",
-            "position": "Position Title",
-            "duration": "Duration",
-            "description": "Rewritten description highlighting relevant aspects",
-            "achievements": [
-                "Action verb + quantifiable achievement + relevant keywords",
-                "Another achievement with metrics"
-            ],
-            "skills_used": ["Relevant skills from job posting"],
-            "metrics": ["Specific numbers/percentages/results"]
+            "section_name": "Professional Summary",
+            "current_status": "Brief assessment of current summary",
+            "required_changes": ["Specific change 1", "Specific change 2"],
+            "suggested_additions": ["New point to add with example", "Another addition"],
+            "keywords_to_add": ["keyword1", "keyword2"],
+            "priority": "high"
+        }},
+        {{
+            "section_name": "Experience",
+            "current_status": "Brief assessment of experience section",
+            "required_changes": ["How to rephrase current experience", "What to emphasize"],
+            "suggested_additions": ["New achievement bullet to add", "Another bullet focusing on X"],
+            "keywords_to_add": ["keyword3", "keyword4"],
+            "priority": "high"
+        }},
+        {{
+            "section_name": "Skills",
+            "current_status": "Brief assessment of skills section",
+            "required_changes": ["Reorder to prioritize X", "Group by category"],
+            "suggested_additions": ["Add skill1 if you have it", "Add skill2"],
+            "keywords_to_add": ["skill_keyword1", "skill_keyword2"],
+            "priority": "medium"
+        }},
+        {{
+            "section_name": "Education & Certifications",
+            "current_status": "Brief assessment",
+            "required_changes": ["Specific changes needed"],
+            "suggested_additions": ["Relevant certifications to highlight"],
+            "keywords_to_add": ["education keywords"],
+            "priority": "low"
         }}
     ],
-    "skills": ["Prioritized skills matching job requirements"],
-    "keywords_integrated": ["List of keywords successfully added"],
-    "modifications_made": ["What was changed and why"]
+    "critical_gaps": ["Must-have requirement 1 that's missing", "Critical gap 2"],
+    "strengths_to_emphasize": ["Strength 1 already in CV", "Strength 2 to highlight more"],
+    "quick_wins": ["Easy fix 1", "Quick improvement 2", "Low-hanging fruit 3"]
 }}
 
-CRITICAL RULES:
-1. ONLY use facts from "ORIGINAL CV FACTS" - NO fabrication
-2. Integrate ALL target keywords naturally
-3. Use quantifiable metrics wherever possible
-4. Highlight transferable skills if exact skills are missing
-5. Maintain professional, achievement-oriented tone
-6. Keep bullet points concise (1-2 lines each)
+INSTRUCTIONS:
+- Be CONCISE and SPECIFIC
+- Focus on ACTIONABLE recommendations
+- Provide EXAMPLES of what to add
+- Prioritize sections by importance (high/medium/low)
+- Identify quick wins for immediate improvement
+- Base all suggestions on actual job requirements
+- Don't suggest fabricating experience
 
 Return ONLY valid JSON.
 """)
         
         try:
-            qa_feedback_text = ""
-            if qa_feedback:
-                qa_feedback_text = f"\nQA FEEDBACK FOR REVISION:\n{qa_feedback}\nPlease address these specific issues in your rewrite."
+            # Format candidate data
+            candidate_summary = candidate_profile.get("summary", "No summary provided")
+            candidate_experience = self._format_experience(candidate_profile.get("experience", []))
+            candidate_skills = ", ".join(candidate_profile.get("skills", []))
+            candidate_education = self._format_education(candidate_profile.get("education", []))
             
             chain = prompt | self.llm
             response = chain.invoke({
-                "cv_facts": "\n".join(cv_facts) if cv_facts else "No specific facts retrieved",
+                "candidate_summary": candidate_summary,
+                "candidate_experience": candidate_experience,
+                "candidate_skills": candidate_skills,
+                "candidate_education": candidate_education,
                 "job_title": job_requirements.get("title", "the position"),
                 "required_skills": ", ".join(job_requirements.get("key_skills", [])),
-                "responsibilities": ", ".join(job_requirements.get("responsibilities", [])[:3]),
-                "target_keywords": ", ".join(target_keywords[:10]),
+                "responsibilities": ", ".join(job_requirements.get("responsibilities", [])[:5]),
+                "experience_level": job_requirements.get("experience_level", "Not specified"),
+                "relevance_score": match_report.get("relevance_score", 0),
+                "matched_skills": ", ".join(match_report.get("matched_skills", [])),
                 "skill_gaps": ", ".join([gap.get("skill", "") for gap in match_report.get("skill_gaps", [])[:5]]),
-                "style_examples": "\n".join([f"- {bullet}" for bullet in original_bullets]) if original_bullets else "Use professional, concise tone",
-                "key_skills": ", ".join(job_requirements.get("key_skills", [])[:3]),
-                "qa_feedback": qa_feedback_text
+                "target_keywords": ", ".join(target_keywords[:15])
             })
             
             # Parse response
             json_text = self._extract_json(response)
             parsed_data = json.loads(json_text)
             
-            return RewrittenSectionSchema(**parsed_data)
+            return CVAnalysisReportSchema(**parsed_data)
                 
         except Exception as e:
-            return self._fallback_rewrite(candidate_profile, job_requirements, match_report)
+            return self._fallback_analysis(candidate_profile, job_requirements, match_report)
     
     def _extract_json(self, text: str) -> str:
         """Extract JSON from response"""
@@ -504,167 +525,46 @@ Return ONLY valid JSON.
                 return json_match.group()
         return text
     
-    def _fallback_rewrite(
+    def _format_experience(self, experience_list: List[Dict]) -> str:
+        """Format experience for prompt"""
+        formatted = []
+        for exp in experience_list[:3]:  # Limit to top 3
+            formatted.append(
+                f"{exp.get('position')} at {exp.get('company')} ({exp.get('duration')}): "
+                f"{exp.get('description', '')}"
+            )
+        return "\n".join(formatted) if formatted else "No experience provided"
+    
+    def _format_education(self, education_list: List[Dict]) -> str:
+        """Format education for prompt"""
+        formatted = []
+        for edu in education_list:
+            formatted.append(
+                f"{edu.get('degree')} in {edu.get('field', 'N/A')} from {edu.get('institution')}"
+            )
+        return ", ".join(formatted) if formatted else "No education provided"
+    
+    def _fallback_analysis(
         self,
         candidate_profile: Dict[str, Any],
         job_requirements: Dict[str, Any],
         match_report: Dict[str, Any]
-    ) -> RewrittenSectionSchema:
-        """Fallback if rewriting fails"""
-        from models import Experience
-        
-        return RewrittenSectionSchema(
-            summary=f"Professional with experience in {', '.join(candidate_profile.get('skills', [])[:3])}",
-            experience=[
-                Experience(**exp) for exp in candidate_profile.get("experience", [])
+    ) -> CVAnalysisReportSchema:
+        """Fallback if analysis fails"""
+        return CVAnalysisReportSchema(
+            overall_assessment="Unable to generate detailed analysis. Please review match report.",
+            relevance_score=match_report.get("relevance_score", 0),
+            section_analyses=[
+                SectionAnalysis(
+                    section_name="Skills",
+                    current_status="Review needed",
+                    required_changes=["Add missing skills from job requirements"],
+                    suggested_additions=[f"Add {skill}" for skill in match_report.get("skill_gaps", [])[:3]],
+                    keywords_to_add=match_report.get("target_keywords", [])[:5],
+                    priority="high"
+                )
             ],
-            skills=candidate_profile.get("skills", []),
-            keywords_integrated=[],
-            modifications_made=["Fallback rewrite due to error"]
-        )
-
-
-class QAAgent:
-    """
-    QA Agent: Quality assurance with self-RAG verification
-    Validates factual accuracy, keyword integration, and style consistency
-    Triggers cyclical refinement loop if issues are found
-    """
-    
-    def __init__(self, llm: Any, rag_system: RAGSystem):
-        self.llm = llm
-        self.rag = rag_system
-    
-    def validate_cv(
-        self,
-        rewritten_sections: Dict[str, Any],
-        original_cv_facts: List[str],
-        required_keywords: List[str],
-        job_requirements: Dict[str, Any]
-    ) -> QAReportSchema:
-        """
-        Validate rewritten CV for factual accuracy and keyword coverage
-        Implements Self-RAG for grounding verification
-        """
-        # Retrieve original facts for verification
-        cv_facts = self.rag.retrieve_cv_facts("All experience, achievements, and metrics")
-        
-        prompt = ChatPromptTemplate.from_template("""
-You are a strict QA auditor for CV content. Verify the rewritten CV for quality issues.
-
-ORIGINAL CV FACTS (Ground truth):
-{original_facts}
-
-REWRITTEN CV CONTENT:
-Summary: {rewritten_summary}
-Experience: {rewritten_experience}
-Skills: {rewritten_skills}
-
-REQUIRED KEYWORDS TO VERIFY:
-{required_keywords}
-
-JOB REQUIREMENTS:
-{job_requirements}
-
-VERIFICATION CHECKLIST:
-1. Factual Accuracy: Are all metrics, dates, and achievements verifiable in original CV?
-2. Keyword Integration: Are all high-priority keywords included naturally?
-3. No Hallucination: Are there any invented facts not in the original CV?
-4. Style Consistency: Is the tone professional and consistent?
-5. ATS Optimization: Are keywords used naturally (not stuffed)?
-
-Provide QA report as JSON:
-{{
-    "passed": true/false,
-    "overall_score": 0-100,
-    "issues": [
-        {{
-            "section": "summary|experience|skills",
-            "issue_type": "missing_keyword|factual_error|style_inconsistency|hallucination",
-            "description": "Specific issue description",
-            "severity": "critical|major|minor",
-            "suggested_fix": "How to fix this issue"
-        }}
-    ],
-    "keywords_verified": ["keyword1", "keyword2"],
-    "missing_keywords": ["missing1", "missing2"],
-    "factual_consistency_check": true/false,
-    "style_consistency_check": true/false,
-    "feedback_for_rewrite": "Specific instructions for rewriter if failed"
-}}
-
-SCORING:
-- 95-100: Excellent, pass
-- 85-94: Good, minor improvements needed
-- 70-84: Acceptable, some issues to fix
-- Below 70: Fail, needs rewrite
-
-CRITICAL: If you find ANY invented facts/metrics not in original CV, mark as CRITICAL issue.
-
-Return ONLY valid JSON.
-""")
-        
-        try:
-            chain = prompt | self.llm
-            response = chain.invoke({
-                "original_facts": "\n".join(cv_facts) if cv_facts else "\n".join(original_cv_facts),
-                "rewritten_summary": rewritten_sections.get("summary", ""),
-                "rewritten_experience": json.dumps(rewritten_sections.get("experience", []), indent=2),
-                "rewritten_skills": ", ".join(rewritten_sections.get("skills", [])),
-                "required_keywords": ", ".join(required_keywords),
-                "job_requirements": f"Title: {job_requirements.get('title')}, Skills: {', '.join(job_requirements.get('key_skills', []))}"
-            })
-            
-            # Parse response
-            json_text = self._extract_json(response)
-            parsed_data = json.loads(json_text)
-            
-            return QAReportSchema(**parsed_data)
-                
-        except Exception as e:
-            return self._fallback_qa(rewritten_sections, required_keywords)
-    
-    def _extract_json(self, text: str) -> str:
-        """Extract JSON from response"""
-        if isinstance(text, str):
-            json_match = re.search(r'\{.*\}', text, re.DOTALL)
-            if json_match:
-                return json_match.group()
-        return text
-    
-    def _fallback_qa(
-        self,
-        rewritten_sections: Dict[str, Any],
-        required_keywords: List[str]
-    ) -> QAReportSchema:
-        """Simple fallback QA check"""
-        # Simple keyword check
-        content_text = f"{rewritten_sections.get('summary', '')} {json.dumps(rewritten_sections.get('experience', []))} {' '.join(rewritten_sections.get('skills', []))}"
-        content_lower = content_text.lower()
-        
-        keywords_found = [kw for kw in required_keywords if kw.lower() in content_lower]
-        keywords_missing = [kw for kw in required_keywords if kw.lower() not in content_lower]
-        
-        issues = []
-        for kw in keywords_missing[:5]:  # Report first 5 missing
-            issues.append(QAIssue(
-                section="overall",
-                issue_type="missing_keyword",
-                description=f"Required keyword '{kw}' not found in rewritten content",
-                severity="major",
-                suggested_fix=f"Integrate '{kw}' naturally into relevant sections"
-            ))
-        
-        passed = len(keywords_missing) == 0
-        score = (len(keywords_found) / len(required_keywords) * 100) if required_keywords else 100.0
-        
-        return QAReportSchema(
-            passed=passed,
-            overall_score=score,
-            issues=issues,
-            keywords_verified=keywords_found,
-            missing_keywords=keywords_missing,
-            factual_consistency_check=True,  # Cannot verify in fallback
-            style_consistency_check=True,
-            feedback_for_rewrite="Please integrate missing keywords" if keywords_missing else None
+            critical_gaps=[gap.get("skill", "") for gap in match_report.get("skill_gaps", [])[:3]],
+            strengths_to_emphasize=match_report.get("matched_skills", [])[:3],
+            quick_wins=["Update skills section", "Add keywords to summary"]
         )

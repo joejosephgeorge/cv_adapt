@@ -9,7 +9,89 @@ from pathlib import Path
 
 from config import Config, LLMConfig, LLMProvider
 from workflow import CVAdaptationWorkflow
-from utils import extract_text_from_file, scrape_job_description, format_adapted_cv
+from utils import extract_text_from_file, scrape_job_description
+
+
+def format_analysis_report(analysis, match_report=None):
+    """Format CV analysis report as plain text for download"""
+    lines = []
+    lines.append("=" * 80)
+    lines.append("CV ANALYSIS REPORT")
+    lines.append("=" * 80)
+    lines.append("")
+    
+    # Overall Assessment
+    lines.append("OVERALL ASSESSMENT")
+    lines.append("-" * 80)
+    lines.append(analysis.overall_assessment)
+    lines.append("")
+    
+    if match_report:
+        lines.append(f"Relevance Score: {match_report.relevance_score:.1f}%")
+        lines.append("")
+    
+    # Quick Wins
+    if analysis.quick_wins:
+        lines.append("QUICK WINS")
+        lines.append("-" * 80)
+        for i, win in enumerate(analysis.quick_wins, 1):
+            lines.append(f"{i}. {win}")
+        lines.append("")
+    
+    # Critical Gaps
+    if analysis.critical_gaps:
+        lines.append("CRITICAL GAPS")
+        lines.append("-" * 80)
+        for gap in analysis.critical_gaps:
+            lines.append(f"• {gap}")
+        lines.append("")
+    
+    # Strengths
+    if analysis.strengths_to_emphasize:
+        lines.append("STRENGTHS TO EMPHASIZE")
+        lines.append("-" * 80)
+        for strength in analysis.strengths_to_emphasize:
+            lines.append(f"• {strength}")
+        lines.append("")
+    
+    # Section Analyses
+    lines.append("DETAILED SECTION ANALYSIS")
+    lines.append("=" * 80)
+    
+    priority_order = {"high": 0, "medium": 1, "low": 2}
+    sorted_sections = sorted(
+        analysis.section_analyses,
+        key=lambda x: priority_order.get(x.priority.lower(), 3)
+    )
+    
+    for section in sorted_sections:
+        lines.append("")
+        lines.append(f"{section.section_name.upper()} [Priority: {section.priority.upper()}]")
+        lines.append("-" * 80)
+        lines.append(f"Current Status: {section.current_status}")
+        lines.append("")
+        
+        if section.required_changes:
+            lines.append("Required Changes:")
+            for change in section.required_changes:
+                lines.append(f"  • {change}")
+            lines.append("")
+        
+        if section.suggested_additions:
+            lines.append("Suggested Additions:")
+            for addition in section.suggested_additions:
+                lines.append(f"  • {addition}")
+            lines.append("")
+        
+        if section.keywords_to_add:
+            lines.append(f"Keywords to Add: {', '.join(section.keywords_to_add)}")
+            lines.append("")
+    
+    lines.append("=" * 80)
+    lines.append("END OF REPORT")
+    lines.append("=" * 80)
+    
+    return "\n".join(lines)
 
 
 def load_config_from_ui() -> Config:
@@ -88,26 +170,12 @@ def load_config_from_ui() -> Config:
                 help="Higher = more creative, Lower = more focused"
             )
             
-            config.workflow.enable_qa_loop = st.checkbox(
-                "Enable QA Self-Correction Loop",
-                value=True,
-                help="Allow QA agent to trigger rewriting if issues found"
-            )
-            
-            config.workflow.max_qa_iterations = st.number_input(
-                "Max QA Iterations",
-                min_value=1,
-                max_value=5,
-                value=2,
-                help="Maximum number of QA refinement loops"
-            )
-            
             config.workflow.min_relevance_score = st.number_input(
                 "Min Relevance Score",
                 min_value=0.0,
                 max_value=100.0,
                 value=50.0,
-                help="Minimum score to proceed with CV adaptation"
+                help="Minimum score to proceed with CV analysis"
             )
         
         return config
@@ -120,8 +188,8 @@ def main():
         layout="wide"
     )
     
-    st.title("📄 CV Adaptor AI")
-    st.markdown("**Intelligent CV Adaptation using Multi-Agent LLM System**")
+    st.title("📄 CV Analysis AI")
+    st.markdown("**Intelligent CV Analysis using Multi-Agent LLM System**")
     st.markdown("---")
     
     # Load configuration
@@ -218,7 +286,7 @@ def main():
     if st.session_state.cv_text and st.session_state.job_description:
         st.header("🤖 Process")
         
-        if st.button("✨ Adapt CV to Job", type="primary", use_container_width=True):
+        if st.button("📊 Analyze CV for Job", type="primary", use_container_width=True):
             # Progress container
             progress_container = st.container()
             
@@ -238,19 +306,15 @@ def main():
                         status_text.text(f"🔄 {message}")
                     
                     # Phase 1: Parsing
-                    status_text.text("📝 Phase 1/4: Parsing documents...")
+                    status_text.text("📝 Phase 1/3: Parsing documents...")
                     progress_bar.progress(20)
                     
                     # Phase 2: Scoring
-                    status_text.text("📊 Phase 2/4: Analyzing match and scoring...")
-                    progress_bar.progress(40)
+                    status_text.text("📊 Phase 2/3: Analyzing match and scoring...")
+                    progress_bar.progress(50)
                     
-                    # Phase 3: Rewriting
-                    status_text.text("✍️ Phase 3/4: Rewriting CV sections...")
-                    progress_bar.progress(60)
-                    
-                    # Phase 4: QA
-                    status_text.text("✅ Phase 4/4: Quality assurance validation...")
+                    # Phase 3: Analysis
+                    status_text.text("🔍 Phase 3/3: Generating analysis report...")
                     progress_bar.progress(80)
                     
                     # Run workflow
@@ -261,15 +325,15 @@ def main():
                     )
                     
                     progress_bar.progress(100)
-                    status_text.text("✅ CV adaptation completed!")
+                    status_text.text("✅ CV analysis completed!")
                     
                     # Store result
                     st.session_state.result = result
                     
                     if result["success"]:
-                        st.success("🎉 CV successfully adapted to job requirements!")
+                        st.success("🎉 CV analysis generated successfully!")
                     else:
-                        st.warning(f"⚠️ Adaptation completed with issues: {', '.join(result['errors'])}")
+                        st.warning(f"⚠️ Analysis completed with issues: {', '.join(result['errors'])}")
                 
                 except Exception as e:
                     st.error(f"❌ Error during adaptation: {str(e)}")
@@ -289,7 +353,7 @@ def main():
         result = st.session_state.result
         
         # Metrics
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             if result.get("match_report"):
@@ -299,40 +363,94 @@ def main():
                 st.metric("Relevance Score", "N/A")
         
         with col2:
-            if result.get("qa_report"):
-                qa_score = result["qa_report"].overall_score
-                st.metric("QA Score", f"{qa_score:.1f}%")
+            if result.get("match_report"):
+                matched_count = len(result["match_report"].matched_skills)
+                st.metric("Matched Skills", matched_count)
             else:
-                st.metric("QA Score", "N/A")
+                st.metric("Matched Skills", "N/A")
         
         with col3:
-            st.metric("QA Iterations", result.get("qa_iterations", 0))
-        
-        with col4:
-            qa_passed = result.get("qa_report", {}).passed if result.get("qa_report") else False
-            st.metric("QA Status", "✅ Passed" if qa_passed else "⚠️ Issues")
+            if result.get("match_report"):
+                gap_count = len(result["match_report"].skill_gaps)
+                st.metric("Skill Gaps", gap_count)
+            else:
+                st.metric("Skill Gaps", "N/A")
         
         st.markdown("---")
         
-        # Adapted CV
-        if result.get("adapted_cv"):
-            st.subheader("📄 Adapted CV")
+        # CV Analysis Report
+        if result.get("analysis_report"):
+            st.subheader("📋 CV Analysis Report")
             
-            adapted_cv_text = format_adapted_cv(result["adapted_cv"])
+            analysis = result["analysis_report"]
             
-            # Download button
-            col1, col2 = st.columns([3, 1])
-            with col2:
-                st.download_button(
-                    label="📥 Download CV",
-                    data=adapted_cv_text,
-                    file_name="adapted_cv.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
+            # Overall Assessment
+            st.markdown("### 🎯 Overall Assessment")
+            st.info(analysis.overall_assessment)
             
-            # Display adapted CV
-            st.text_area("Adapted CV Content", adapted_cv_text, height=400)
+            # Quick Wins
+            if analysis.quick_wins:
+                st.markdown("### ⚡ Quick Wins")
+                st.markdown("*Easy improvements you can make right away:*")
+                for i, win in enumerate(analysis.quick_wins, 1):
+                    st.markdown(f"{i}. {win}")
+            
+            # Critical Gaps
+            if analysis.critical_gaps:
+                st.markdown("### 🚨 Critical Gaps")
+                st.markdown("*Must-have requirements that are missing:*")
+                for gap in analysis.critical_gaps:
+                    st.error(f"❌ {gap}")
+            
+            # Strengths to Emphasize
+            if analysis.strengths_to_emphasize:
+                st.markdown("### ✅ Strengths to Emphasize")
+                st.markdown("*What's already good in your CV:*")
+                for strength in analysis.strengths_to_emphasize:
+                    st.success(f"✓ {strength}")
+            
+            st.markdown("---")
+            
+            # Section-by-Section Analysis
+            st.markdown("### 📊 Detailed Section Analysis")
+            
+            # Sort by priority
+            priority_order = {"high": 0, "medium": 1, "low": 2}
+            sorted_sections = sorted(
+                analysis.section_analyses,
+                key=lambda x: priority_order.get(x.priority.lower(), 3)
+            )
+            
+            for section in sorted_sections:
+                priority_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(section.priority.lower(), "⚪")
+                
+                with st.expander(f"{priority_emoji} {section.section_name} (Priority: {section.priority.upper()})", expanded=(section.priority.lower() == "high")):
+                    st.markdown(f"**Current Status:** {section.current_status}")
+                    
+                    if section.required_changes:
+                        st.markdown("**Required Changes:**")
+                        for change in section.required_changes:
+                            st.markdown(f"- {change}")
+                    
+                    if section.suggested_additions:
+                        st.markdown("**Suggested Additions:**")
+                        for addition in section.suggested_additions:
+                            st.markdown(f"- {addition}")
+                    
+                    if section.keywords_to_add:
+                        st.markdown("**Keywords to Add:**")
+                        st.code(", ".join(section.keywords_to_add))
+            
+            # Download Analysis Report
+            st.markdown("---")
+            report_text = format_analysis_report(analysis, result.get("match_report"))
+            st.download_button(
+                label="📥 Download Analysis Report",
+                data=report_text,
+                file_name="cv_analysis_report.txt",
+                mime="text/plain",
+                use_container_width=False
+            )
         
         # Match Report
         if result.get("match_report"):
@@ -355,39 +473,14 @@ def main():
                 
                 st.write("**Target Keywords:**")
                 st.write(", ".join(match_report.target_keywords) if match_report.target_keywords else "None")
-        
-        # QA Report
-        if result.get("qa_report"):
-            with st.expander("✅ Quality Assurance Report"):
-                qa_report = result["qa_report"]
-                
-                st.write(f"**Overall Score:** {qa_report.overall_score:.1f}%")
-                st.write(f"**Passed:** {'✅ Yes' if qa_report.passed else '❌ No'}")
-                st.write(f"**Factual Consistency:** {'✅' if qa_report.factual_consistency_check else '❌'}")
-                st.write(f"**Style Consistency:** {'✅' if qa_report.style_consistency_check else '❌'}")
-                
-                if qa_report.issues:
-                    st.write("**Issues Found:**")
-                    for issue in qa_report.issues:
-                        severity_emoji = {"critical": "🔴", "major": "🟡", "minor": "🟢"}.get(issue.severity, "⚪")
-                        st.write(f"{severity_emoji} **{issue.section}** ({issue.issue_type}): {issue.description}")
-                        if issue.suggested_fix:
-                            st.write(f"   *Suggested fix: {issue.suggested_fix}*")
-                
-                st.write("**Keywords Verified:**")
-                st.write(", ".join(qa_report.keywords_verified) if qa_report.keywords_verified else "None")
-                
-                if qa_report.missing_keywords:
-                    st.write("**Missing Keywords:**")
-                    st.write(", ".join(qa_report.missing_keywords))
     
     # Footer
     st.markdown("---")
     st.markdown(
         """
         <div style='text-align: center; color: #666;'>
-            <p><strong>CV Adaptor AI</strong> - Powered by Multi-Agent LLM System</p>
-            <p>Uses LangGraph orchestration with Parser, Scoring, Rewriter, and QA agents</p>
+            <p><strong>CV Analysis AI</strong> - Powered by Multi-Agent LLM System</p>
+            <p>Uses LangGraph orchestration with Parser, Scoring, and Analysis agents</p>
         </div>
         """,
         unsafe_allow_html=True

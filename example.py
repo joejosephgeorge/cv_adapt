@@ -1,5 +1,5 @@
 """
-Simple example script to test CV Adaptor
+Simple example script to test CV Analysis
 Run with: python example.py
 """
 from config import Config, LLMProvider
@@ -81,7 +81,7 @@ Requirements:
 
 
 def main():
-    print("🚀 CV Adaptor Example")
+    print("🚀 CV Analysis Example")
     print("=" * 80)
     
     # Initialize configuration
@@ -95,8 +95,6 @@ def main():
     config.llm.ollama_model = "llama3.2:3b"
     
     # Workflow settings
-    config.workflow.enable_qa_loop = True
-    config.workflow.max_qa_iterations = 2
     config.workflow.min_relevance_score = 50.0
     
     print(f"✅ Using {config.llm.provider} with model {config.llm.ollama_model}")
@@ -112,8 +110,8 @@ def main():
         print("💡 And the model is pulled: ollama pull llama3.2:3b")
         return
     
-    # Run adaptation
-    print("\n🤖 Running CV adaptation workflow...")
+    # Run analysis
+    print("\n🤖 Running CV analysis workflow...")
     print("-" * 80)
     
     def progress_callback(message: str):
@@ -129,17 +127,11 @@ def main():
         print("-" * 80)
         
         if result["success"]:
-            print("\n✅ CV adaptation completed successfully!")
+            print("\n✅ CV analysis completed successfully!")
             
             # Display metrics
             print("\n📊 Results:")
             print(f"  • Relevance Score: {result['match_report'].relevance_score:.1f}%")
-            
-            if result.get("qa_report"):
-                print(f"  • QA Score: {result['qa_report'].overall_score:.1f}%")
-                print(f"  • QA Passed: {'✅ Yes' if result['qa_report'].passed else '❌ No'}")
-            
-            print(f"  • QA Iterations: {result['qa_iterations']}")
             
             # Display match analysis
             if result.get("match_report"):
@@ -154,33 +146,74 @@ def main():
                     for gap in match_report.skill_gaps[:5]:
                         print(f"    - {gap.skill} ({gap.importance})")
             
-            # Display adapted CV summary
-            if result.get("adapted_cv"):
-                print("\n📄 Adapted CV Summary:")
-                adapted_cv = result["adapted_cv"]
-                print(f"  • Name: {adapted_cv.contact.name}")
-                print(f"  • Experience Entries: {len(adapted_cv.experience)}")
-                print(f"  • Skills: {len(adapted_cv.skills)}")
+            # Display analysis report
+            if result.get("analysis_report"):
+                print("\n📋 CV Analysis Report:")
+                analysis = result["analysis_report"]
                 
-                print("\n  New Professional Summary:")
-                print(f"  {adapted_cv.summary[:200]}..." if len(adapted_cv.summary) > 200 else f"  {adapted_cv.summary}")
+                print(f"\n  Overall Assessment:")
+                print(f"  {analysis.overall_assessment}")
+                
+                if analysis.quick_wins:
+                    print(f"\n  ⚡ Quick Wins:")
+                    for i, win in enumerate(analysis.quick_wins[:3], 1):
+                        print(f"    {i}. {win}")
+                
+                if analysis.critical_gaps:
+                    print(f"\n  🚨 Critical Gaps:")
+                    for gap in analysis.critical_gaps[:3]:
+                        print(f"    • {gap}")
+                
+                print(f"\n  📊 Section Analyses: {len(analysis.section_analyses)} sections")
+                for section in analysis.section_analyses[:3]:
+                    print(f"    • {section.section_name} [Priority: {section.priority}]")
                 
                 # Save to file
-                from utils import format_adapted_cv
-                adapted_text = format_adapted_cv(adapted_cv)
+                output_file = "cv_analysis_report.txt"
                 
-                output_file = "adapted_cv_example.txt"
+                # Format report
+                lines = []
+                lines.append("=" * 80)
+                lines.append("CV ANALYSIS REPORT")
+                lines.append("=" * 80)
+                lines.append("")
+                lines.append(f"Overall Assessment: {analysis.overall_assessment}")
+                lines.append("")
+                
+                if analysis.quick_wins:
+                    lines.append("QUICK WINS:")
+                    for win in analysis.quick_wins:
+                        lines.append(f"  • {win}")
+                    lines.append("")
+                
+                if analysis.critical_gaps:
+                    lines.append("CRITICAL GAPS:")
+                    for gap in analysis.critical_gaps:
+                        lines.append(f"  • {gap}")
+                    lines.append("")
+                
+                lines.append("SECTION ANALYSES:")
+                for section in analysis.section_analyses:
+                    lines.append(f"\n{section.section_name} [Priority: {section.priority}]")
+                    lines.append(f"  Status: {section.current_status}")
+                    if section.required_changes:
+                        lines.append("  Changes:")
+                        for change in section.required_changes:
+                            lines.append(f"    - {change}")
+                
+                lines.append("\n" + "=" * 80)
+                
                 with open(output_file, "w") as f:
-                    f.write(adapted_text)
+                    f.write("\n".join(lines))
                 
-                print(f"\n💾 Full adapted CV saved to: {output_file}")
+                print(f"\n💾 Full analysis report saved to: {output_file}")
         
         else:
-            print("\n❌ CV adaptation failed!")
+            print("\n❌ CV analysis failed!")
             print(f"Errors: {', '.join(result['errors'])}")
     
     except Exception as e:
-        print(f"\n❌ Error during adaptation: {str(e)}")
+        print(f"\n❌ Error during analysis: {str(e)}")
         import traceback
         print("\nFull traceback:")
         print(traceback.format_exc())
