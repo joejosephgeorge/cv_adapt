@@ -1,14 +1,44 @@
 # CV Adaptor AI
 
-**Intelligent CV Adaptation using Multi-Agent LLM System**
+**Intelligent CV Analysis & Adaptation using Multi-Agent LLM System**
 
-A sophisticated CV tailoring system that uses LangGraph-orchestrated multi-agent architecture with RAG (Retrieval-Augmented Generation) to automatically adapt your CV to match specific job descriptions.
+A sophisticated CV analysis and tailoring system that uses LangGraph-orchestrated multi-agent architecture with RAG (Retrieval-Augmented Generation) to provide detailed, actionable recommendations for optimizing your CV to match specific job descriptions.
+
+## ✨ **NEW: Enhanced CV Analysis Mode**
+
+Get **extremely detailed, ATS-optimized analysis** of your CV with specific recommendations on what to ADD, REMOVE, and MODIFY for each section:
+
+- 📋 **Section-by-Section Analysis**: Detailed breakdown of Summary, Experience, Skills, Education, Projects, and Certifications
+- ✅ **Items to ADD**: Specific content, skills, and keywords to include with copy-paste ready examples
+- ❌ **Items to REMOVE**: Outdated or weak content that should be eliminated
+- ✏️ **Items to MODIFY**: Before → After rewrite examples showing exactly how to improve bullets
+- 🔑 **ATS Keyword Integration**: Exact keywords from job description with placement recommendations
+- 🎯 **Specific Tool/Framework Suggestions**: Mentions of algorithms (XGBoost, Random Forest), tools (Tableau, Scikit-learn), and technologies
+- 📊 **Priority Ranking**: High/Medium/Low priority for each section to focus your efforts
+
+**Example Output:**
+```
+EXPERIENCE - Data Scientist at Grubhub
+
+✅ Items to ADD:
+- "Created interactive Tableau dashboards to visualize order trends and model 
+  performance for product stakeholders"
+- "Participated in cross-functional brainstorming sessions to identify 
+  AI-driven process improvements"
+
+✏️ Items to MODIFY:
+- BEFORE: "Deployed a recommendation engine to production"
+  AFTER: "Deployed collaborative filtering recommendation engine using 
+         Python (Scikit-learn) to increase average order size by 7%"
+
+🔑 Keywords: machine learning algorithms, predictive modeling, data visualization
+```
 
 ## 🏗️ Architecture
 
 This system implements a state-of-the-art multi-agent architecture as described in academic literature on LLM-based document processing:
 
-### Four Specialized Agents
+### Specialized Agents
 
 1. **Parser Agent** - Structured data extraction from unstructured CV and JD text
    - Uses Pydantic schema enforcement with retry mechanism
@@ -20,12 +50,19 @@ This system implements a state-of-the-art multi-agent architecture as described 
    - Generates explainable relevance scores with citations
    - Identifies skill gaps and target keywords
 
-3. **Rewriter Agent** - Content generation with RAG grounding
+3. **Analysis Agent** ⭐ **NEW** - Detailed CV analysis with actionable recommendations
+   - Provides section-by-section breakdown with ADD/REMOVE/MODIFY recommendations
+   - Generates ATS-optimized keyword suggestions
+   - Creates before→after rewrite examples for immediate use
+   - Suggests specific tools, frameworks, and algorithm names to include
+   - Prioritizes recommendations by impact (high/medium/low)
+
+4. **Rewriter Agent** - Content generation with RAG grounding
    - Rewrites CV sections using Action-Metric-Result framework
    - Ensures factual accuracy through RAG context retrieval
    - Cost-optimized LLM (Llama 3, etc.) suitable
 
-4. **QA Agent** - Quality assurance with self-correction loop
+5. **QA Agent** - Quality assurance with self-correction loop
    - Validates keyword integration and factual consistency
    - Triggers cyclical refinement if issues found
    - High-reasoning LLM recommended for critical validation
@@ -124,8 +161,21 @@ export LLM_PROVIDER="groq"
 
 1. Upload your CV (PDF, DOCX, or TXT)
 2. Provide job description (URL or paste text)
-3. Click "Adapt CV to Job"
-4. Download adapted CV
+3. Click "Analyze CV for Job"
+4. Review detailed analysis with ADD/REMOVE/MODIFY recommendations
+5. Download analysis report with actionable insights
+
+**Analysis Output Includes:**
+- 🎯 Overall assessment with relevance score
+- ⚡ Quick wins for immediate improvement
+- 🚨 Critical gaps in must-have requirements
+- ✅ Strengths to emphasize more
+- 📋 Detailed section-by-section recommendations:
+  - **Professional Summary**: Complete rewrite example if missing
+  - **Experience**: Before→After bullet rewrites with specific algorithms/tools
+  - **Skills**: Specific skills to add/remove/reorder with ATS keywords
+  - **Education**: Relevant certifications and courses to add
+  - **Projects**: Project templates with tech stack mentions
 
 ### Programmatic Usage
 
@@ -222,30 +272,118 @@ cv_adapt/
 
 ## 🎯 Features
 
+### Enhanced CV Analysis ⭐ **NEW**
+- ✅ **Section-by-section detailed analysis** with priority ranking
+- ✅ **ADD recommendations** with copy-paste ready examples
+- ✅ **REMOVE recommendations** identifying weak/outdated content
+- ✅ **MODIFY recommendations** with before→after rewrites
+- ✅ **ATS keyword optimization** with exact placement suggestions
+- ✅ **Tool/framework mentions** (algorithms, technologies, platforms)
+- ✅ **Quantifiable metrics integration** in bullet points
+- ✅ **Quick wins identification** for immediate improvements
+- ✅ **Critical gaps highlighting** for must-have requirements
+
 ### Document Processing
 - ✅ PDF, DOCX, TXT support
 - ✅ Web scraping for job postings
 - ✅ Layout-aware text extraction
+- ✅ Multi-format CV parsing with achievement extraction
 
 ### Intelligent Adaptation
 - ✅ Semantic skill matching with RAG
-- ✅ Keyword optimization for ATS
+- ✅ Keyword optimization for ATS systems
 - ✅ Quantifiable achievement rewriting
 - ✅ Transferable skills highlighting
+- ✅ Context-aware content generation
 
 ### Quality Assurance
 - ✅ Factual accuracy verification
 - ✅ Keyword coverage validation
 - ✅ Self-correction loop
-- ✅ Explainable scoring
+- ✅ Explainable scoring with reasoning
 
 ### Multiple LLM Providers
 - ✅ Ollama (local, free)
 - ✅ OpenAI (GPT-4, GPT-4o-mini)
 - ✅ Anthropic (Claude)
 - ✅ Groq (fast inference)
+- ✅ Hybrid model strategy support
 
 ## 🔧 Advanced Usage
+
+### Using the Enhanced Analysis Mode
+
+The Analysis Agent provides detailed, actionable feedback for CV optimization:
+
+**Typical Workflow:**
+1. Upload your existing CV
+2. Paste the target job description
+3. Receive comprehensive analysis with:
+   - Overall relevance score and assessment
+   - Quick wins (easy improvements)
+   - Critical gaps (must-have requirements missing)
+   - Section-by-section recommendations
+
+**Example Analysis Output:**
+
+```
+PROFESSIONAL SUMMARY [Priority: HIGH]
+Current Status: Missing professional summary
+
+✅ Items to ADD:
+- Add 3-4 line summary: "Data Scientist with 5+ years implementing 
+  machine learning solutions. Expertise in Python (Scikit-learn, TensorFlow), 
+  predictive modeling, and dashboard development (Tableau). Track record of 
+  driving 20%+ improvements in business metrics through data-driven insights."
+
+🔑 Keywords: Machine Learning, Data Science, Predictive Modeling, Python, 
+             AI Solutions, Data Visualization
+
+EXPERIENCE - Data Scientist at Grubhub [Priority: HIGH]
+Current Status: Strong metrics but missing specific algorithm mentions
+
+✏️ Items to MODIFY:
+- BEFORE: "Implemented various time series forecasting techniques"
+  AFTER: "Implemented time series forecasting algorithms (ARIMA, Prophet, 
+          LSTM) using Python to predict surge demand, reducing customer 
+          wait time by 10 minutes"
+
+✅ Items to ADD:
+- "Created interactive Tableau dashboards visualizing key metrics for 
+   product and operations stakeholders"
+- "Collaborated in brainstorming sessions to identify AI-driven 
+   process optimizations"
+
+🔑 Keywords: machine learning algorithms, predictive models, 
+             stakeholder communication, data visualization
+
+SKILLS [Priority: HIGH]
+Current Status: Good technical skills but missing visualization and 
+                business process focus
+
+✅ Items to ADD:
+- Machine Learning Implementation
+- Data Visualization (Tableau, Power BI, Plotly)
+- Predictive Modeling & Feature Engineering
+- Business Process Optimization
+- Dashboard Development & KPI Reporting
+
+❌ Items to REMOVE:
+- Remove "Flash" (outdated)
+- Remove basic tools assumed for role level
+
+✏️ Items to MODIFY:
+- Reorder to prioritize JD-matching skills first
+- Expand: "ML" → "Machine Learning (ML)" for ATS
+- Group: ML & AI | Data Viz | Tools | Business Skills
+```
+
+**Best Practices:**
+- Use powerful models (GPT-4o, Claude Sonnet) for Analysis Agent
+- Review all HIGH priority sections first
+- Implement quick wins for immediate improvement
+- Use provided before→after examples as templates
+- Integrate suggested keywords naturally into your content
 
 ### Custom Prompts
 
@@ -275,6 +413,7 @@ Based on architecture analysis:
 |-------|------|-------------------|-----------|
 | Parser | Structured extraction | GPT-4, Claude Sonnet | High reliability for JSON |
 | Scoring | Relevance analysis | Llama 3.1 8B, GPT-4o-mini | Balanced performance |
+| **Analysis** ⭐ | **Detailed recommendations** | **GPT-4o, Claude Sonnet** | **Complex reasoning for granular analysis** |
 | Rewriter | Content generation | Llama 3.2 3B, GPT-4o-mini | High throughput, cost-effective |
 | QA | Validation | GPT-4, Claude Sonnet | Critical reasoning |
 
