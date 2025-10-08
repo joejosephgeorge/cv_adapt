@@ -404,13 +404,15 @@ class AnalysisAgent:
         
         # Build comprehensive prompt for analysis
         prompt = ChatPromptTemplate.from_template("""
-You are an expert career advisor analyzing a CV against job requirements.
+You are an expert ATS-optimization career advisor and CV writer analyzing a CV against job requirements.
 
 CANDIDATE'S CURRENT CV:
 - Summary: {candidate_summary}
 - Experience: {candidate_experience}
 - Skills: {candidate_skills}
 - Education: {candidate_education}
+- Certifications: {candidate_certifications}
+- Projects: {candidate_projects}
 
 JOB REQUIREMENTS:
 - Title: {job_title}
@@ -424,73 +426,176 @@ MATCH ANALYSIS:
 - Skill Gaps: {skill_gaps}
 - Target Keywords: {target_keywords}
 
-Generate a CONCISE CV analysis report organized by sections. For each section, provide:
-1. Current status assessment
-2. Required changes (specific, actionable)
-3. New points to add (with examples)
-4. Keywords to integrate from job description
+Generate an EXTREMELY DETAILED, ATS-OPTIMIZED CV analysis report organized by sections. 
+
+For each CV section, provide GRANULAR, SPECIFIC, and ACTIONABLE recommendations:
+1. Current status assessment (exactly what's in the CV now)
+2. Items to ADD (with specific examples of rewritten content, frameworks, tools to mention)
+3. Items to REMOVE (identify specific weak/outdated phrases or content)
+4. Items to MODIFY (provide BEFORE → AFTER rewrite examples)
+5. ATS Keywords to integrate (extract from job description)
 
 Return as JSON:
 {{
-    "overall_assessment": "Brief 2-3 sentence overall assessment of CV fit",
+    "overall_assessment": "Detailed 2-3 sentence assessment covering CV-job fit, ATS readiness, and overall alignment",
     "relevance_score": {relevance_score},
     "section_analyses": [
         {{
             "section_name": "Professional Summary",
-            "current_status": "Brief assessment of current summary",
-            "required_changes": ["Specific change 1", "Specific change 2"],
-            "suggested_additions": ["New point to add with example", "Another addition"],
-            "keywords_to_add": ["keyword1", "keyword2"],
+            "current_status": "Currently: Missing/Present - describe exactly what exists",
+            "items_to_add": [
+                "Add 3-4 line professional summary highlighting [specific skills from JD]",
+                "Include years of experience and key domain expertise (e.g., 'ML Engineer with 5+ years in predictive modeling')",
+                "Mention specific tools/frameworks from CV that match JD (e.g., 'Skilled in Python, TensorFlow, Scikit-learn')",
+                "Add business impact focus (e.g., 'driving data-driven decision making')"
+            ],
+            "items_to_remove": ["Generic phrases like 'hard worker' or 'team player'", "Vague statements without metrics"],
+            "items_to_modify": ["If summary exists: BEFORE: '[current text]' → AFTER: '[rewritten with keywords and metrics]'"],
+            "keywords_to_add": ["[exact keywords from job description]", "[ATS-friendly terms]"],
             "priority": "high"
         }},
         {{
-            "section_name": "Experience",
-            "current_status": "Brief assessment of experience section",
-            "required_changes": ["How to rephrase current experience", "What to emphasize"],
-            "suggested_additions": ["New achievement bullet to add", "Another bullet focusing on X"],
-            "keywords_to_add": ["keyword3", "keyword4"],
+            "section_name": "Experience - [Company Name]",
+            "current_status": "Currently has [X] bullets covering [topics]. Strong on metrics but missing [specific JD requirement]",
+            "items_to_add": [
+                "Add bullet: 'Implemented [specific ML algorithms from JD, e.g., XGBoost, Random Forest] to [business outcome]'",
+                "Add collaboration/stakeholder element: 'Created Tableau dashboards to visualize [metrics] for [stakeholders]'",
+                "Add brainstorming/innovation mention: 'Participated in cross-functional brainstorming sessions to identify AI-driven improvements'",
+                "Add specific tools/frameworks mentioned in JD but missing from bullets"
+            ],
+            "items_to_remove": ["Routine tasks without business impact", "Bullets lacking metrics or outcomes"],
+            "items_to_modify": [
+                "BEFORE: 'Deployed a recommendation engine' → AFTER: 'Deployed a collaborative filtering recommendation engine using Python (Scikit-learn) to increase order size by 7%'",
+                "BEFORE: 'Implemented forecasting' → AFTER: 'Implemented time series forecasting algorithms (ARIMA, Prophet) to predict surge demand'",
+                "Add specific algorithm names, tools, and frameworks to existing bullets"
+            ],
+            "keywords_to_add": ["machine learning algorithms", "predictive modeling", "data visualization", "stakeholder communication"],
             "priority": "high"
         }},
         {{
             "section_name": "Skills",
-            "current_status": "Brief assessment of skills section",
-            "required_changes": ["Reorder to prioritize X", "Group by category"],
-            "suggested_additions": ["Add skill1 if you have it", "Add skill2"],
-            "keywords_to_add": ["skill_keyword1", "skill_keyword2"],
-            "priority": "medium"
+            "current_status": "Current skills: [list them]. Missing: [JD requirements not present]",
+            "items_to_add": [
+                "Add 'Machine Learning Implementation' or 'ML Algorithm Development' as category",
+                "Add 'Data Visualization' with tools: Tableau, Power BI, Plotly, Matplotlib",
+                "Add 'Predictive Modeling' explicitly",
+                "Add 'Business Process Optimization' or 'Data-Driven Optimization'",
+                "Add 'Dashboard Development' or 'KPI Reporting'",
+                "Add specific missing tools from JD: [list them]"
+            ],
+            "items_to_remove": ["Outdated technologies not relevant to role", "Basic skills assumed for level (e.g., Excel for senior roles)"],
+            "items_to_modify": [
+                "Reorder: Put JD-matching skills first",
+                "Group by category: 'ML & AI', 'Data Analysis & Visualization', 'Tools & Technologies', 'Business Skills'",
+                "Expand abbreviated terms for ATS (e.g., 'ML' → 'Machine Learning (ML)')"
+            ],
+            "keywords_to_add": ["exact skill keywords from job description"],
+            "priority": "high"
         }},
         {{
             "section_name": "Education & Certifications",
-            "current_status": "Brief assessment",
-            "required_changes": ["Specific changes needed"],
-            "suggested_additions": ["Relevant certifications to highlight"],
-            "keywords_to_add": ["education keywords"],
-            "priority": "low"
+            "current_status": "Currently has [degree]. Missing certifications/training",
+            "items_to_add": [
+                "Add relevant certifications: 'Machine Learning (Coursera/Stanford)', 'Data Visualization (Tableau/Power BI)'",
+                "Add relevant coursework if recent graduate: 'Relevant coursework: [list matching JD]'",
+                "Add online courses showing continuous learning commitment"
+            ],
+            "items_to_remove": ["High school education if college degree present", "Very old/irrelevant certifications"],
+            "items_to_modify": ["Highlight honors, relevant GPA if strong (>3.5), relevant thesis/capstone projects"],
+            "keywords_to_add": ["certification names from JD", "continuous learning", "professional development"],
+            "priority": "medium"
+        }},
+        {{
+            "section_name": "Projects",
+            "current_status": "Missing projects section / Has [X] projects but [issue]",
+            "items_to_add": [
+                "Add 'Projects' section if missing",
+                "Add 2-3 projects: '[Project Name]: Brief description with tech stack and business impact'",
+                "Example: 'Predictive Customer Churn Model: Built Random Forest classifier achieving 85% accuracy, deployed via Flask API'",
+                "Focus on projects matching JD requirements"
+            ],
+            "items_to_remove": ["Very old projects with outdated tech", "Projects not relevant to target role"],
+            "items_to_modify": ["Add metrics and business outcomes to existing project descriptions", "Mention specific tools and algorithms used"],
+            "keywords_to_add": ["project-related keywords from JD"],
+            "priority": "medium"
         }}
     ],
-    "critical_gaps": ["Must-have requirement 1 that's missing", "Critical gap 2"],
-    "strengths_to_emphasize": ["Strength 1 already in CV", "Strength 2 to highlight more"],
-    "quick_wins": ["Easy fix 1", "Quick improvement 2", "Low-hanging fruit 3"]
+    "critical_gaps": ["Specific must-have skills/experience missing from CV", "ATS keyword gaps"],
+    "strengths_to_emphasize": ["Strong metrics and quantifiable achievements", "Relevant experience with [specific skill]"],
+    "quick_wins": ["Add professional summary", "Insert ATS keywords in skills section", "Mention specific algorithms/tools in experience bullets"]
 }}
 
-INSTRUCTIONS:
-- Be CONCISE and SPECIFIC
-- Focus on ACTIONABLE recommendations
-- Provide EXAMPLES of what to add
-- Prioritize sections by importance (high/medium/low)
-- Identify quick wins for immediate improvement
-- Base all suggestions on actual job requirements
-- Don't suggest fabricating experience
+CRITICAL INSTRUCTIONS - FOLLOW EXACTLY:
 
-Return ONLY valid JSON.
+1. **ATS OPTIMIZATION FOCUS:**
+   - Extract EXACT keywords and phrases from job description
+   - Suggest where to insert these keywords naturally
+   - Recommend expanding abbreviations for ATS scanning (ML → Machine Learning)
+   - Focus on making CV ATS-friendly while remaining readable
+
+2. **BE EXTREMELY GRANULAR AND SPECIFIC:**
+   - Don't just say "add skills" - specify WHICH skills, tools, frameworks
+   - Don't just say "improve bullets" - provide EXACT BEFORE → AFTER rewrites
+   - Reference specific bullet points from candidate's CV by quoting them
+   - Provide actual rewritten examples the candidate can copy/paste
+   - Mention specific algorithm names, tool versions, framework names
+
+3. **FOR ADDITIONS:**
+   - Provide concrete, copy-paste ready examples
+   - Base additions on candidate's EXISTING experience (don't fabricate)
+   - Show how to reframe existing work to match JD requirements
+   - Suggest specific metrics, tools, or frameworks to mention
+   - Example: "Add: 'Implemented supervised learning models (Random Forest, XGBoost) using Scikit-learn and Python'"
+
+4. **FOR REMOVALS:**
+   - Quote SPECIFIC phrases or bullets to remove
+   - Explain WHY (outdated, generic, weak, irrelevant)
+   - Example: "Remove: 'Responsible for data analysis' - too vague, lacks impact"
+
+5. **FOR MODIFICATIONS:**
+   - Provide BEFORE → AFTER examples for every suggestion
+   - Show exactly how to rewrite bullets to add keywords, metrics, specificity
+   - Example: "BEFORE: 'Built a model' → AFTER: 'Developed gradient boosting classification model (XGBoost) achieving 92% accuracy'"
+   - Focus on adding: algorithm names, tool names, metrics, business impact, stakeholder mentions
+
+6. **SECTION-SPECIFIC GUIDANCE:**
+   - **Summary**: Write a complete 3-4 line example summary if missing
+   - **Experience**: Provide 2-3 complete rewritten bullet examples per role
+   - **Skills**: List 10-15 specific skills/tools to add from JD
+   - **Education**: Suggest specific certifications or courses matching the role
+   - **Projects**: Provide project description templates
+
+7. **KEYWORD INTEGRATION:**
+   - Extract 20-30 keywords from job description
+   - Show EXACTLY where to insert each keyword category
+   - Group keywords by: technical skills, soft skills, domain terms, tools
+
+8. **QUALITY STANDARDS:**
+   - Every recommendation must be actionable and specific
+   - Provide examples the candidate can immediately use
+   - Don't suggest fabricating experience
+   - Base all suggestions on candidate's actual background
+   - Analyze ALL CV sections: Summary, each Experience entry, Skills, Education, Certifications, Projects
+
+Return ONLY valid JSON with these detailed, specific, actionable recommendations.
 """)
         
         try:
             # Format candidate data
             candidate_summary = candidate_profile.get("summary", "No summary provided")
             candidate_experience = self._format_experience(candidate_profile.get("experience", []))
-            candidate_skills = ", ".join(candidate_profile.get("skills", []))
+            candidate_skills = ", ".join(candidate_profile.get("skills", [])) if candidate_profile.get("skills") else "Not specified"
             candidate_education = self._format_education(candidate_profile.get("education", []))
+            candidate_certifications = ", ".join(candidate_profile.get("certifications", [])) if candidate_profile.get("certifications") else "None listed"
+            candidate_projects = "; ".join(candidate_profile.get("projects", [])[:5]) if candidate_profile.get("projects") else "No projects listed"
+            
+            # Format skill gaps with importance
+            skill_gaps_formatted = []
+            for gap in match_report.get("skill_gaps", [])[:10]:
+                if isinstance(gap, dict):
+                    skill_gaps_formatted.append(f"{gap.get('skill', '')} ({gap.get('importance', 'unknown')})")
+                else:
+                    skill_gaps_formatted.append(str(gap))
             
             chain = prompt | self.llm
             response = chain.invoke({
@@ -498,14 +603,16 @@ Return ONLY valid JSON.
                 "candidate_experience": candidate_experience,
                 "candidate_skills": candidate_skills,
                 "candidate_education": candidate_education,
+                "candidate_certifications": candidate_certifications,
+                "candidate_projects": candidate_projects,
                 "job_title": job_requirements.get("title", "the position"),
-                "required_skills": ", ".join(job_requirements.get("key_skills", [])),
-                "responsibilities": ", ".join(job_requirements.get("responsibilities", [])[:5]),
+                "required_skills": ", ".join(job_requirements.get("key_skills", [])[:20]),
+                "responsibilities": "; ".join(job_requirements.get("responsibilities", [])[:10]),
                 "experience_level": job_requirements.get("experience_level", "Not specified"),
                 "relevance_score": match_report.get("relevance_score", 0),
-                "matched_skills": ", ".join(match_report.get("matched_skills", [])),
-                "skill_gaps": ", ".join([gap.get("skill", "") for gap in match_report.get("skill_gaps", [])[:5]]),
-                "target_keywords": ", ".join(target_keywords[:15])
+                "matched_skills": ", ".join(match_report.get("matched_skills", [])[:15]),
+                "skill_gaps": ", ".join(skill_gaps_formatted),
+                "target_keywords": ", ".join(target_keywords[:30])
             })
             
             # Parse response
@@ -526,23 +633,36 @@ Return ONLY valid JSON.
         return text
     
     def _format_experience(self, experience_list: List[Dict]) -> str:
-        """Format experience for prompt"""
+        """Format experience for prompt with full details"""
         formatted = []
-        for exp in experience_list[:3]:  # Limit to top 3
-            formatted.append(
-                f"{exp.get('position')} at {exp.get('company')} ({exp.get('duration')}): "
-                f"{exp.get('description', '')}"
-            )
+        for exp in experience_list[:5]:  # Include more roles for better analysis
+            exp_text = f"\n{exp.get('position')} at {exp.get('company')} ({exp.get('duration')})"
+            if exp.get('description'):
+                exp_text += f"\n  Description: {exp.get('description')}"
+            
+            if exp.get('achievements'):
+                exp_text += f"\n  Achievements:"
+                for achievement in exp.get('achievements', [])[:5]:
+                    exp_text += f"\n    • {achievement}"
+            
+            if exp.get('skills_used'):
+                exp_text += f"\n  Skills Used: {', '.join(exp.get('skills_used', []))}"
+            
+            if exp.get('metrics'):
+                exp_text += f"\n  Metrics: {', '.join(exp.get('metrics', []))}"
+            
+            formatted.append(exp_text)
         return "\n".join(formatted) if formatted else "No experience provided"
     
     def _format_education(self, education_list: List[Dict]) -> str:
-        """Format education for prompt"""
+        """Format education for prompt with full details"""
         formatted = []
         for edu in education_list:
-            formatted.append(
-                f"{edu.get('degree')} in {edu.get('field', 'N/A')} from {edu.get('institution')}"
-            )
-        return ", ".join(formatted) if formatted else "No education provided"
+            edu_text = f"{edu.get('degree')} in {edu.get('field', 'N/A')} from {edu.get('institution')} ({edu.get('duration', 'N/A')})"
+            if edu.get('gpa'):
+                edu_text += f" - GPA: {edu.get('gpa')}"
+            formatted.append(edu_text)
+        return "\n".join(formatted) if formatted else "No education provided"
     
     def _fallback_analysis(
         self,
@@ -551,20 +671,25 @@ Return ONLY valid JSON.
         match_report: Dict[str, Any]
     ) -> CVAnalysisReportSchema:
         """Fallback if analysis fails"""
+        skill_gaps = match_report.get("skill_gaps", [])
         return CVAnalysisReportSchema(
             overall_assessment="Unable to generate detailed analysis. Please review match report.",
             relevance_score=match_report.get("relevance_score", 0),
             section_analyses=[
                 SectionAnalysis(
                     section_name="Skills",
-                    current_status="Review needed",
-                    required_changes=["Add missing skills from job requirements"],
-                    suggested_additions=[f"Add {skill}" for skill in match_report.get("skill_gaps", [])[:3]],
+                    current_status="Review needed - basic analysis only",
+                    items_to_add=[f"Add {gap.get('skill', skill) if isinstance(gap, dict) else skill}" 
+                                 for skill in (skill_gaps if isinstance(skill_gaps, list) else [])[:3]
+                                 for gap in [skill if isinstance(skill, dict) else {'skill': skill}]],
+                    items_to_remove=["Review skills section for outdated or irrelevant skills"],
+                    items_to_modify=["Reorder skills to match job requirements priority"],
                     keywords_to_add=match_report.get("target_keywords", [])[:5],
                     priority="high"
                 )
             ],
-            critical_gaps=[gap.get("skill", "") for gap in match_report.get("skill_gaps", [])[:3]],
+            critical_gaps=[gap.get("skill", str(gap)) if isinstance(gap, dict) else str(gap) 
+                          for gap in skill_gaps[:3]],
             strengths_to_emphasize=match_report.get("matched_skills", [])[:3],
-            quick_wins=["Update skills section", "Add keywords to summary"]
+            quick_wins=["Update skills section", "Add keywords to summary", "Reorder experience bullets"]
         )

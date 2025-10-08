@@ -107,8 +107,9 @@ class SectionAnalysis(BaseModel):
     """Analysis for a specific CV section"""
     section_name: str  # "Summary", "Experience", "Skills", etc.
     current_status: str  # Brief assessment of current state
-    required_changes: List[str] = Field(default_factory=list)  # Specific changes needed
-    suggested_additions: List[str] = Field(default_factory=list)  # New points to add
+    items_to_add: List[str] = Field(default_factory=list)  # Specific items/points to add
+    items_to_remove: List[str] = Field(default_factory=list)  # Specific items/points to remove
+    items_to_modify: List[str] = Field(default_factory=list)  # Existing items to rephrase/modify
     keywords_to_add: List[str] = Field(default_factory=list)  # Keywords from JD to integrate
     priority: str = "medium"  # "high", "medium", "low"
 

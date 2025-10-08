@@ -71,20 +71,26 @@ def format_analysis_report(analysis, match_report=None):
         lines.append(f"Current Status: {section.current_status}")
         lines.append("")
         
-        if section.required_changes:
-            lines.append("Required Changes:")
-            for change in section.required_changes:
-                lines.append(f"  • {change}")
+        if section.items_to_add:
+            lines.append("Items to ADD:")
+            for item in section.items_to_add:
+                lines.append(f"  ➕ {item}")
             lines.append("")
         
-        if section.suggested_additions:
-            lines.append("Suggested Additions:")
-            for addition in section.suggested_additions:
-                lines.append(f"  • {addition}")
+        if section.items_to_remove:
+            lines.append("Items to REMOVE:")
+            for item in section.items_to_remove:
+                lines.append(f"  ➖ {item}")
+            lines.append("")
+        
+        if section.items_to_modify:
+            lines.append("Items to MODIFY:")
+            for item in section.items_to_modify:
+                lines.append(f"  🔄 {item}")
             lines.append("")
         
         if section.keywords_to_add:
-            lines.append(f"Keywords to Add: {', '.join(section.keywords_to_add)}")
+            lines.append(f"Keywords to Integrate: {', '.join(section.keywords_to_add)}")
             lines.append("")
     
     lines.append("=" * 80)
@@ -426,19 +432,32 @@ def main():
                 
                 with st.expander(f"{priority_emoji} {section.section_name} (Priority: {section.priority.upper()})", expanded=(section.priority.lower() == "high")):
                     st.markdown(f"**Current Status:** {section.current_status}")
+                    st.markdown("")
                     
-                    if section.required_changes:
-                        st.markdown("**Required Changes:**")
-                        for change in section.required_changes:
-                            st.markdown(f"- {change}")
+                    # Items to Add
+                    if section.items_to_add:
+                        st.markdown("**✅ Items to ADD:**")
+                        for item in section.items_to_add:
+                            st.markdown(f"- ➕ {item}")
+                        st.markdown("")
                     
-                    if section.suggested_additions:
-                        st.markdown("**Suggested Additions:**")
-                        for addition in section.suggested_additions:
-                            st.markdown(f"- {addition}")
+                    # Items to Remove
+                    if section.items_to_remove:
+                        st.markdown("**❌ Items to REMOVE:**")
+                        for item in section.items_to_remove:
+                            st.markdown(f"- ➖ {item}")
+                        st.markdown("")
                     
+                    # Items to Modify
+                    if section.items_to_modify:
+                        st.markdown("**✏️ Items to MODIFY:**")
+                        for item in section.items_to_modify:
+                            st.markdown(f"- 🔄 {item}")
+                        st.markdown("")
+                    
+                    # Keywords to Integrate
                     if section.keywords_to_add:
-                        st.markdown("**Keywords to Add:**")
+                        st.markdown("**🔑 Keywords to Integrate:**")
                         st.code(", ".join(section.keywords_to_add))
             
             # Download Analysis Report
